@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
 function normalizeName(str) {
     return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
@@ -35,6 +36,44 @@ function tentukanJurusan(namaProdi) {
     return 'Lainnya';
 }
 
+// Fetch helper menggunakan https native dengan rejectUnauthorized: false (sama seperti CURLOPT_SSL_VERIFYPEER => false di PHP)
+function fetchPddiktiLive(url) {
+    return new Promise((resolve, reject) => {
+        const options = {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': 'https://pddikti.kemdiktisaintek.go.id/',
+                'Origin': 'https://pddikti.kemdiktisaintek.go.id',
+                'Accept': 'application/json, text/plain, */*'
+            },
+            rejectUnauthorized: false, // Menghindari penolakan SSL sertifikat pemerintah pada Node.js
+            timeout: 8000
+        };
+
+        const req = https.get(url, options, (res) => {
+            if (res.statusCode < 200 || res.statusCode >= 300) {
+                return reject(new Error(`HTTP ${res.statusCode} from PDDikti`));
+            }
+            let body = '';
+            res.on('data', chunk => body += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(body);
+                    resolve(parsed);
+                } catch (e) {
+                    reject(new Error('Respons PDDikti bukan JSON valid'));
+                }
+            });
+        });
+
+        req.on('error', err => reject(err));
+        req.on('timeout', () => {
+            req.destroy();
+            reject(new Error('Timeout 8 detik saat menghubungi PDDikti'));
+        });
+    });
+}
+
 module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -61,20 +100,7 @@ module.exports = async (req, res) => {
     const pddiktiUrl = 'https://pddikti.kemdiktisaintek.go.id/api/pencarian/enc/all/POLITEKNIK%20NEGERI%20LHOKSEUMAWE';
 
     try {
-        const response = await fetch(pddiktiUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://pddikti.kemdiktisaintek.go.id/',
-                'Origin': 'https://pddikti.kemdiktisaintek.go.id',
-                'Accept': 'application/json, text/plain, */*'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const json = await response.json();
+        const json = await fetchPddiktiLive(pddiktiUrl);
         const prodiPddikti = (json && json.data && Array.isArray(json.data.prodi)) ? json.data.prodi : [];
 
         if (prodiPddikti.length === 0) {
@@ -112,6 +138,7 @@ module.exports = async (req, res) => {
 
         return res.status(200).json({
             status: true,
+            is_live: true,
             sumber: 'PDDikti Langsung (Kemdiktisaintek via Vercel)',
             endpoint: pddiktiUrl,
             terakhir_diperbarui: waktuStr,
@@ -120,12 +147,16 @@ module.exports = async (req, res) => {
             data: finalData
         });
     } catch (err) {
-        console.error('PDDikti fetch error:', err);
+        console.error('PDDikti live fetch error:', err.message);
+
+        // Fallback aman ke data lokal dengan info debug yang jujur
         if (localData.length > 0) {
             return res.status(200).json({
                 status: true,
+                is_live: false,
                 sumber: 'Data Lokal PNL (Fallback Vercel)',
                 terakhir_diperbarui: 'Offline Backup',
+                debug_error: err.message,
                 jumlah_data: localData.length,
                 data: localData
             });
@@ -133,7 +164,8 @@ module.exports = async (req, res) => {
 
         return res.status(502).json({
             status: false,
-            message: 'Gagal mengambil data dari PDDikti',
+            is_live: false,
+            message: 'Gagal mengambil data dari PDDikti maupun data cadangan',
             error: err.message
         });
     }
