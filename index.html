@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Program Studi PNL</title>
+
+    <link rel="stylesheet" href="style.css?v=3">
+</head>
+
+<body>
+
+    <header class="hero">
+        <div class="hero-content">
+            <div class="hero-title">
+                <img src="img/logo-pnl.png" alt="Logo Politeknik Negeri Lhokseumawe" class="logo-pnl">
+
+                <div class="hero-text">
+                    <h1>
+                        Program Studi
+                        <span>Politeknik Negeri Lhokseumawe</span>
+                    </h1>
+
+                    <p>
+                        Informasi akreditasi program studi dan biaya uang kuliah tunggal Politeknik Negeri
+                        Lhokseumawe
+                    </p>
+                </div>
+            </div>
+
+            <!-- ACTION BAR & REAL-TIME SYNC STATUS -->
+            <div class="hero-action-bar">
+                <div class="sync-status">
+                    <span class="status-indicator-live"></span>
+                    <span class="sync-source">Sumber: <strong>PDDikti Kemdiktisaintek</strong></span>
+                    <span class="sync-time" id="syncTimeBadge">Sinkron: Memuat...</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-action btn-refresh" id="btnRefreshData" title="Ambil pembaruan langsung dari API PDDikti">
+                        <span class="btn-icon" id="refreshIcon">🔄</span>
+                        <span class="btn-text" id="refreshText">Sinkronkan PDDikti</span>
+                    </button>
+                    <button class="btn-action btn-download" id="btnDownloadPdf" title="Unduh / Cetak Laporan PDF">
+                        <span class="btn-icon">📥</span>
+                        <span class="btn-text">Unduh PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- VIEW NAVIGATION TABS -->
+            <nav class="view-tabs" role="tablist" aria-label="Pilihan Tampilan Data">
+                <button class="tab-btn active" id="tabKartu" role="tab" aria-selected="true">
+                    <span class="tab-icon">🎓</span>
+                    <span>Tampilan Jurusan & Kartu</span>
+                </button>
+                <button class="tab-btn" id="tabTabel" role="tab" aria-selected="false">
+                    <span class="tab-icon">📋</span>
+                    <span>Tampilan Tabel Lengkap</span>
+                    <span class="tab-badge" id="tabBadgeCount">43</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- ==================== HALAMAN JURUSAN ==================== -->
+        <section id="halamanJurusan">
+
+            <div class="stats">
+
+                <div class="stat-card">
+                    <div class="stat-icon">🏫</div>
+                    <div>
+                        <p>Perguruan Tinggi</p>
+                        <h2>1</h2>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🎓</div>
+                    <div>
+                        <p>Program Studi</p>
+                        <h2 id="jumlahProdi">-</h2>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🏢</div>
+                    <div>
+                        <p>Jurusan</p>
+                        <h2 id="jumlahJurusan">-</h2>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="section-heading">
+                <div>
+                    <span class="section-label">PNL ACADEMIC</span>
+                    <h2>Pilih Jurusan</h2>
+                    <p>Pilih jurusan untuk melihat program studi yang tersedia.</p>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <span class="search-icon">⌕</span>
+                <input type="text" id="searchJurusan" placeholder="Cari jurusan..." autocomplete="off">
+            </div>
+
+            <div class="jurusan-grid" id="jurusanContainer">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Memuat data jurusan...</p>
+                </div>
+            </div>
+
+            <div class="empty" id="emptyJurusan">
+                <div class="empty-icon">⌕</div>
+                <h3>Jurusan tidak ditemukan</h3>
+                <p>Coba gunakan kata kunci lain.</p>
+            </div>
+
+        </section>
+
+
+        <!-- ==================== HALAMAN PROGRAM STUDI ==================== -->
+        <section id="halamanProdi" class="halaman-prodi">
+
+            <button class="back-button" id="tombolKembali">
+                <span>←</span>
+                Kembali ke Jurusan
+            </button>
+
+            <div class="prodi-heading">
+                <div class="jurusan-heading-icon" id="iconJurusan">🎓</div>
+
+                <div>
+                    <span class="section-label">PROGRAM STUDI</span>
+                    <h2 id="namaJurusan">-</h2>
+                    <p id="jumlahProdiJurusan">-</p>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <span class="search-icon">⌕</span>
+                <input type="text" id="searchProdi" placeholder="Cari program studi..." autocomplete="off">
+            </div>
+
+            <div class="prodi-grid" id="prodiContainer"></div>
+
+            <div class="empty" id="emptyProdi">
+                <div class="empty-icon">⌕</div>
+                <h3>Program studi tidak ditemukan</h3>
+                <p>Coba gunakan kata kunci lain.</p>
+            </div>
+
+        </section>
+
+
+        <!-- ==================== HALAMAN TABEL LENGKAP ==================== -->
+        <section id="halamanTabel" class="halaman-tabel" style="display: none;">
+
+            <div class="section-heading table-section-heading">
+                <div>
+                    <span class="section-label">TABEL RESMI & TERPADU</span>
+                    <h2>Daftar Semua Program Studi</h2>
+                    <p>Data lengkap 43 Program Studi Politeknik Negeri Lhokseumawe tersinkronisasi langsung dengan PDDikti.</p>
+                </div>
+                <div class="table-heading-actions">
+                    <button class="btn-action-outline" id="btnDownloadPdfTabel" title="Unduh atau Cetak Laporan Tabel ke PDF">
+                        <span>📥 Unduh Laporan PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- FILTER & SEARCH CONTROLS -->
+            <div class="filter-controls-card">
+                <div class="filter-row">
+                    <div class="search-box table-search-box">
+                        <span class="search-icon">⌕</span>
+                        <input type="text" id="searchTabel" placeholder="Cari program studi, jurusan, jenjang, akreditasi..." autocomplete="off">
+                    </div>
+
+                    <div class="filter-dropdowns">
+                        <select id="filterJurusanTabel" class="filter-select" aria-label="Filter Berdasarkan Jurusan">
+                            <option value="">Semua Jurusan</option>
+                            <option value="Teknologi Informasi & Komputer">Teknologi Informasi & Komputer</option>
+                            <option value="Tata Niaga">Tata Niaga</option>
+                            <option value="Teknik Sipil">Teknik Sipil</option>
+                            <option value="Teknik Elektro">Teknik Elektro</option>
+                            <option value="Teknik Mesin">Teknik Mesin</option>
+                            <option value="Teknik Kimia">Teknik Kimia</option>
+                        </select>
+
+                        <select id="filterJenjangTabel" class="filter-select" aria-label="Filter Berdasarkan Jenjang">
+                            <option value="">Semua Jenjang</option>
+                            <option value="D1">D1</option>
+                            <option value="D2">D2</option>
+                            <option value="D3">D3</option>
+                            <option value="D4">D4</option>
+                            <option value="S2 Terapan">S2 Terapan</option>
+                        </select>
+
+                        <select id="filterAkreditasiTabel" class="filter-select" aria-label="Filter Berdasarkan Akreditasi">
+                            <option value="">Semua Akreditasi</option>
+                            <option value="Unggul">Unggul</option>
+                            <option value="Baik Sekali">Baik Sekali</option>
+                            <option value="Baik">Baik</option>
+                            <option value="B">B</option>
+                            <option value="Terakreditasi">Terakreditasi</option>
+                        </select>
+
+                        <button id="btnResetFilter" class="btn-reset-filter" title="Reset semua filter">
+                            <span>↺ Reset</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="filter-summary">
+                    <span>Menampilkan <strong id="tabelCount">0</strong> dari <strong id="tabelTotal">0</strong> program studi</span>
+                </div>
+            </div>
+
+            <!-- DATA TABLE -->
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="data-table" id="prodiTable">
+                        <thead>
+                            <tr>
+                                <th class="col-no" data-sort="id">No <span class="sort-icon">↕</span></th>
+                                <th class="col-prodi" data-sort="nama_prodi">Program Studi <span class="sort-icon">↕</span></th>
+                                <th class="col-jurusan" data-sort="jurusan">Jurusan <span class="sort-icon">↕</span></th>
+                                <th class="col-jenjang" data-sort="jenjang">Jenjang <span class="sort-icon">↕</span></th>
+                                <th class="col-akreditasi" data-sort="akreditasi">Akreditasi <span class="sort-icon">↕</span></th>
+                                <th class="col-biaya" data-sort="biaya_min">Estimasi Biaya UKT <span class="sort-icon">↕</span></th>
+                                <th class="col-status">Status</th>
+                                <th class="col-aksi">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelProdiBody">
+                            <!-- Populated via Javascript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty" id="emptyTabel" style="display: none;">
+                    <div class="empty-icon">⌕</div>
+                    <h3>Tidak ada program studi yang cocok</h3>
+                    <p>Coba sesuaikan kata kunci atau ubah filter pencarian di atas.</p>
+                </div>
+            </div>
+
+        </section>
+
+
+        <div class="error" id="error">
+            <strong>Data gagal dimuat.</strong>
+            <span>Pastikan file data.json berada di folder yang sama dengan index.html.</span>
+        </div>
+
+        <!-- ==================== MODAL DETAIL PRODI ==================== -->
+        <div class="modal-overlay" id="modalDetailProdi" role="dialog" aria-modal="true" aria-hidden="true">
+            <div class="modal-card">
+                <button class="modal-close" id="tutupModal" aria-label="Tutup detail prodi">&times;</button>
+                
+                <div class="modal-header">
+                    <div class="modal-badges">
+                        <span class="jenjang" id="modalJenjang">-</span>
+                        <span class="akreditasi" id="modalAkreditasi">-</span>
+                    </div>
+                    <h2 id="modalNamaProdi">-</h2>
+                    <p id="modalJurusan" class="prodi-jurusan">-</p>
+                </div>
+
+                <div class="card-divider"></div>
+
+                <div class="modal-body">
+                    <div class="modal-info-grid">
+                        <div class="info-item">
+                            <div class="info-icon">🏫</div>
+                            <div>
+                                <label>Perguruan Tinggi</label>
+                                <p>Politeknik Negeri Lhokseumawe</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">🏢</div>
+                            <div>
+                                <label>Jurusan</label>
+                                <p id="modalInfoJurusan">-</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">🎓</div>
+                            <div>
+                                <label>Akreditasi</label>
+                                <p id="modalInfoAkreditasi">-</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">💰</div>
+                            <div>
+                                <label>Estimasi Biaya UKT</label>
+                                <p id="modalInfoUkt">-</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">📡</div>
+                            <div>
+                                <label>Status Data</label>
+                                <p><span class="status-dot">●</span> Terdaftar di PDDikti Kemdiktisaintek</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <a href="#" id="modalLinkPddikti" target="_blank" rel="noopener noreferrer" class="btn-pddikti">
+                        <span>Lihat Profil Resmi di PDDikti Kemdiktisaintek</span>
+                        <span class="btn-arrow">↗</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+
+    <footer>
+        <div class="footer-content">
+
+            <div>
+                <strong>Program Studi PNL</strong>
+                <p>Politeknik Negeri Lhokseumawe</p>
+            </div>
+
+            <div class="footer-source">
+                <span>DATA SOURCE</span>
+                <p>PDDIKTI / Portal Data PNL</p>
+            </div>
+
+        </div>
+    </footer>
+
+    <!-- ==================== ELEMEN CETAK PDF KHUSUS ==================== -->
+    <div id="printReportArea" class="print-only">
+        <div class="print-header">
+            <div class="print-header-content">
+                <img src="img/logo-pnl.png" alt="Logo PNL" class="print-logo">
+                <div class="print-header-text">
+                    <h3>KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</h3>
+                    <h2>POLITEKNIK NEGERI LHOKSEUMAWE</h2>
+                    <p>Jl. Banda Aceh-Medan Km. 280.3 Buketrata, Lhokseumawe, Aceh - Indonesia | Laman: www.pnl.ac.id</p>
+                    <div class="print-line"></div>
+                    <h4>LAPORAN RESMI DAFTAR PROGRAM STUDI, AKREDITASI & ESTIMASI BIAYA UKT</h4>
+                </div>
+            </div>
+            <div class="print-meta-grid">
+                <div><strong>Sumber Data:</strong> PDDikti Kemdiktisaintek (Live API Proxy)</div>
+                <div><strong>Status Kampus:</strong> Perguruan Tinggi Vokasi Negeri (Aktif)</div>
+                <div><strong>Waktu Sinkron PDDikti:</strong> <span id="printSyncDate">-</span></div>
+                <div><strong>Tanggal Cetak:</strong> <span id="printDate">-</span></div>
+            </div>
+        </div>
+
+        <table class="print-table" id="printTable">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">No</th>
+                    <th style="width: 33%;">Program Studi</th>
+                    <th style="width: 25%;">Jurusan</th>
+                    <th style="width: 9%;">Jenjang</th>
+                    <th style="width: 14%;">Akreditasi</th>
+                    <th style="width: 14%;">Estimasi UKT</th>
+                </tr>
+            </thead>
+            <tbody id="printTableBody">
+                <!-- Diisi secara otomatis dari data tabel -->
+            </tbody>
+        </table>
+
+        <div class="print-footer">
+            <div class="print-footer-info">
+                <p>Dokumen ini dihasilkan secara otomatis oleh Sistem Informasi Program Studi PNL Online.</p>
+                <p>Informasi detail resmi prodi dapat diakses melalui portal PDDikti (pddikti.kemdiktisaintek.go.id).</p>
+            </div>
+            <div class="print-sign-area">
+                <p>Lhokseumawe, <span id="printSignDate">-</span></p>
+                <p class="sign-space"></p>
+                <p><strong>Politeknik Negeri Lhokseumawe</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toastNotification" class="toast-notification" role="status" aria-live="polite"></div>
+
+    <script src="data.js"></script>
+    <script src="script.js?v=3"></script>
+
+</body>
+
+</html>
