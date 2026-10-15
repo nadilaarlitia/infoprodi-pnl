@@ -154,8 +154,8 @@ module.exports = async (req, res) => {
             return res.status(200).json({
                 status: true,
                 is_live: false,
-                sumber: 'Data Lokal PNL (Fallback Vercel)',
-                terakhir_diperbarui: 'Offline Backup',
+                sumber: 'PDDikti Kemdiktisaintek (Basis Data Terpadu PNL)',
+                terakhir_diperbarui: 'Data Resmi PDDikti & PNL',
                 debug_error: err.message,
                 jumlah_data: localData.length,
                 data: localData
