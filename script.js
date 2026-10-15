@@ -169,11 +169,14 @@ function muatDataAplikasi() {
         return;
     }
 
-    // Coba ambil dari api.php (Live PDDikti), fallback ke data.json jika offline
-    fetch("api.php")
+    // Tentukan endpoint API yang tepat: Vercel serverless api/pddikti atau api.php di XAMPP
+    const apiEndpoint = window.location.hostname.includes("vercel.app") ? "api/pddikti" : "api.php";
+
+    // Coba ambil dari API resmi (Live PDDikti), fallback ke data.json jika offline
+    fetch(apiEndpoint)
         .then(response => {
             if (!response.ok) {
-                throw new Error("api.php response tidak ok: " + response.status);
+                throw new Error("API response tidak ok: " + response.status);
             }
             return response.json();
         })
@@ -182,7 +185,7 @@ function muatDataAplikasi() {
             olahDanTampilkanData(data);
         })
         .catch(apiError => {
-            console.warn("Gagal memuat dari api.php, mencoba fallback ke data.json...", apiError);
+            console.warn("Gagal memuat dari API utama, mencoba fallback ke data.json...", apiError);
             fetch("data.json?v=" + Date.now())
                 .then(res => {
                     if (!res.ok) throw new Error("data.json tidak ditemukan");
@@ -230,7 +233,11 @@ function sinkronkanDataPddikti() {
 
     tampilkanToast("⏳ Sedang mengambil data ter-update langsung dari Kemdiktisaintek PDDikti...");
 
-    fetch("api.php?refresh=1&_t=" + Date.now())
+    const apiEndpoint = window.location.hostname.includes("vercel.app")
+        ? "api/pddikti?refresh=1&_t=" + Date.now()
+        : "api.php?refresh=1&_t=" + Date.now();
+
+    fetch(apiEndpoint)
         .then(res => {
             if (!res.ok) throw new Error("Gagal refresh: status " + res.status);
             return res.json();
