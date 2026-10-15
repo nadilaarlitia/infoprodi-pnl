@@ -139,6 +139,10 @@ function olahDanTampilkanData(data) {
     if (syncTimeBadge) {
         syncTimeBadge.textContent = "Sinkron: " + terakhirSinkronWaktu;
     }
+    const syncSourceEl = document.querySelector(".sync-source strong");
+    if (syncSourceEl && data.sumber) {
+        syncSourceEl.textContent = data.sumber;
+    }
     if (printSyncDate) {
         printSyncDate.textContent = terakhirSinkronWaktu;
     }
@@ -244,7 +248,13 @@ function sinkronkanDataPddikti() {
         })
         .then(data => {
             olahDanTampilkanData(data);
-            tampilkanToast(`✅ Berhasil! ${semuaData.length} Program Studi diperbarui langsung dari PDDikti.`);
+
+            const isLive = data.is_live === true || (data.sumber && data.sumber.includes("PDDikti Langsung"));
+            if (isLive) {
+                tampilkanToast(`✅ Berhasil! ${semuaData.length} Program Studi diperbarui langsung dari PDDikti.`);
+            } else {
+                tampilkanToast(`ℹ️ Menampilkan data cadangan PNL (${semuaData.length} Prodi). Server PDDikti sedang membatasi akses live.`, 4500);
+            }
         })
         .catch(err => {
             console.warn("Sinkronisasi live PDDikti gagal:", err);
